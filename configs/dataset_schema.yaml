@@ -20,11 +20,17 @@ columns:
 
   - name: transaction_date
     raw_name: MES
-    dtype: period[M]
+    dtype: datetime64[ns]
     nullable: false
-    description: >
-      Period of the revenue. Protocol requires DATE (YYYY-MM-DD) at
-      transaction-level granularity; source delivers monthly YYYYMM.
+    description: "Date of disbursement of the transaction, format YYYY-MM-DD"
+    conformance:
+      status: FAIL
+      actual_dtype: period[M]
+      detail: >
+        Protocol requires daily granularity (YYYY-MM-DD). Fudo delivers
+        monthly period (YYYYMM). This forces Skalar to assume uniform
+        distribution or arbitrary date assignment within the month,
+        compromising the single-source-of-truth principle (protocol §4.1).
 
   - name: currency
     raw_name: MONEDA
@@ -73,6 +79,9 @@ extra_columns:
 
 # Grain: one row per (client_id, transaction_date, product).
 # Verified: zero duplicates at this grain.
+# NOTE: because transaction_date is monthly (not daily), the effective grain is
+# (client_id, month, product). If Fudo delivers daily data in the future, the
+# grain remains valid but the row count will increase.
 grain:
   - client_id
   - transaction_date
