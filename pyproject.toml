@@ -1,0 +1,22 @@
+[project]
+name = "fudo"
+version = "0.1.0"
+description = "EDA and data quality assessment for externally shared datasets"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pandas>=2.2",
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+    "openpyxl>=3.1",
+    "pyarrow>=17.0",
+    "pyyaml>=6.0",
+    "jupyter>=1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fudo"]

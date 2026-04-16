@@ -1,0 +1,79 @@
+# Canonical schema for Fudo → Skalar transactional data.
+# Based on: Protocolo de Comunicación de Datos Transaccionales (2026-04-09)
+
+dataset:
+  name: "fudo_revenue"
+  source_organization: "Fudo"
+  received_date: "2026-04-16"
+  description: >
+    Monthly revenue collections by client and product,
+    exported from Fudo's Metabase instance.
+
+# Maps raw CSV column names to canonical names and expected types.
+# `raw_name` is what arrives in the CSV; `name` is the protocol-defined canonical name.
+columns:
+  - name: client_id
+    raw_name: "a.ACCOUNT_ID"
+    dtype: str
+    nullable: false
+    description: "Unique, immutable customer identifier"
+
+  - name: transaction_date
+    raw_name: MES
+    dtype: period[M]
+    nullable: false
+    description: >
+      Period of the revenue. Protocol requires DATE (YYYY-MM-DD) at
+      transaction-level granularity; source delivers monthly YYYYMM.
+
+  - name: currency
+    raw_name: MONEDA
+    dtype: str
+    nullable: false
+    description: "ISO-4217 currency code"
+    valid_values: [ARS, BRL, CLP, COP, MXN, USD]
+
+  - name: collections
+    raw_name: REV_LOCAL
+    dtype: float64
+    nullable: false
+    description: "Cash-basis revenue in local currency (net of IVA)"
+    valid_range: [0, null]
+
+  - name: product
+    raw_name: PRODUCTO
+    dtype: str
+    nullable: true
+    description: "Product line"
+    valid_values: [Saas, Payments, Online Ordering]
+
+  - name: channel
+    raw_name: null
+    dtype: str
+    nullable: true
+    description: "Acquisition channel — NOT present in current export"
+
+  - name: client_segment
+    raw_name: null
+    dtype: str
+    nullable: true
+    description: "Customer segment — NOT present in current export"
+
+# Columns present in the CSV but NOT part of the canonical protocol.
+extra_columns:
+  - name: pais
+    raw_name: PAIS
+    dtype: str
+    description: "Country — derivable from currency, not in protocol"
+
+  - name: fecha_primer_pago
+    raw_name: FECHA_PRIMER_PAGO
+    dtype: str
+    description: "First payment date (cohort attribute) — not in protocol"
+
+# Grain: one row per (client_id, transaction_date, product).
+# Verified: zero duplicates at this grain.
+grain:
+  - client_id
+  - transaction_date
+  - product
