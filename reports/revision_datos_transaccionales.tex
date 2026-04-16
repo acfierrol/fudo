@@ -1,0 +1,138 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish, es-noquoting]{babel}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{tabularx}
+
+\geometry{margin=2.5cm}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.4em}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue,
+    citecolor=black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Skalar Inc}
+\fancyhead[R]{\small Revisi\'on de Datos Transaccionales -- Abril 2026}
+\fancyfoot[C]{\thepage}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\field}[1]{\texttt{#1}}
+
+\title{
+    \vspace{-2cm}
+    {\LARGE Revisi\'on de la Primera Entrega de Datos \\
+    Transaccionales Fudo -- Skalar} \\[0.3cm]
+}
+\author{Skalar Inc.}
+\date{16 de abril de 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+%% ============================================================
+\section{Alcance}
+
+Este documento resume los hallazgos de la auditor\'ia de calidad realizada
+por Skalar sobre la primera entrega de datos transaccionales de Fudo
+(export Metabase del 16 de abril de 2026, 33\,959~filas). La revisi\'on
+evalu\'o conformidad de tipos, dominios de valores, integridad de grano
+y formato de entrega, seg\'un lo establecido en el \textit{Protocolo de
+Comunicaci\'on de Datos Transaccionales Fudo--Skalar} (2026-04-09).
+
+Adicionalmente, se introduce el \textbf{contrato de datos}
+(\code{data\_contract.yaml}) como especificaci\'on t\'ecnica
+leg\'ible por m\'aquina que acompa\~na al protocolo.
+
+%% ============================================================
+\section{Resultado de la Revisi\'on}
+
+\begin{tabularx}{\textwidth}{l c X}
+\toprule
+\textbf{Verificaci\'on} & \textbf{Estado} & \textbf{Detalle} \\
+\midrule
+Unicidad de grano & PASS &
+  Cero duplicados en (\field{client\_id}, \field{transaction\_date},
+  \field{product}). \\[4pt]
+Nulabilidad & PASS &
+  Columnas NOT NULL sin valores nulos. \\[4pt]
+Dominio de \field{currency} & PASS &
+  Valores dentro de \{ARS, BRL, CLP, COP, MXN, USD\}. \\[4pt]
+Dominio de \field{product} & PASS &
+  Valores dentro de \{Saas, Payments, Online Ordering\}. \\[4pt]
+Rango de \field{collections} & PASS &
+  $\geq 0$. El 2.2\,\% de filas tiene valor cero (v\'alido). \\[4pt]
+Granularidad de \field{collections} & PASS &
+  Revenue reportado por producto, no agregado por cuenta. \\[4pt]
+\midrule
+Formato num\'erico (NF-01) & FAIL &
+  Separadores de miles en campos num\'ericos; ning\'un motor
+  infiere tipos correctamente. \\[4pt]
+Granularidad temporal (DF-01) & FAIL &
+  \field{MES} entrega periodo mensual (YYYYMM), no fecha diaria
+  (YYYY-MM-DD) seg\'un \S3.1 del protocolo. \\[4pt]
+Formato de fechas (DF-01) & FAIL &
+  \field{FECHA\_PRIMER\_PAGO} en formato \textit{locale}
+  ingl\'es, no ISO~8601. \\[4pt]
+Nombre de columna (AL-01) & FAIL &
+  \field{a.ACCOUNT\_ID} contiene alias SQL del query Metabase. \\[4pt]
+Columnas faltantes & AUSENTE &
+  \field{channel} y \field{client\_segment} no presentes en el
+  export actual. \\
+\bottomrule
+\end{tabularx}
+
+%% ============================================================
+\section{Contrato de Datos}
+
+El archivo \code{data\_contract.yaml} formaliza, en formato leg\'ible por
+m\'aquina, las expectativas de Skalar sobre los datos que Fudo entrega.
+Su prop\'osito es servir como referencia t\'ecnica para el equipo de
+ingenier\'ia de Fudo durante el desarrollo del pipeline de exportaci\'on.
+
+El contrato define:
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Formato de entrega.} Reglas de codificaci\'on CSV
+      (sin separadores de miles, fechas ISO~8601, UTF-8) y la
+      recomendaci\'on de migrar a Parquet, formato que elimina toda
+      ambig\"uedad de tipos al almacenar el esquema en metadatos del
+      archivo.
+    \item \textbf{Esquema can\'onico.} Las 7~columnas del protocolo con
+      tipo, nulabilidad, restricciones de dominio y estado de
+      conformidad actual por columna.
+    \item \textbf{Expectativas de calidad.} Unicidad de grano,
+      cumplimiento de nulabilidad, integridad referencial y
+      completitud temporal.
+    \item \textbf{Acciones priorizadas.} Lista ordenada por impacto
+      (P0--P3) de los cambios que Fudo debe implementar en el export.
+\end{enumerate}
+
+Las acciones de prioridad~\textbf{P0} son:
+
+\begin{itemize}[leftmargin=2em]
+    \item Eliminar separadores de miles de todos los campos num\'ericos.
+    \item Entregar \field{transaction\_date} con granularidad diaria
+      (YYYY-MM-DD), utilizando el campo \field{Payment\_date} del
+      sistema origen referenciado en \S3.2 del protocolo.
+\end{itemize}
+
+Skalar mantendr\'a el contrato actualizado conforme evolucione el
+pipeline. Cada entrega posterior ser\'a validada autom\'aticamente
+contra este contrato.
+
+\end{document}

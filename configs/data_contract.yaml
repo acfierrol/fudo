@@ -1,0 +1,62 @@
+# Contrato de Datos: Fudo → Skalar — Datos Transaccionales
+#
+# Especificación del esquema que Skalar espera consumir,
+# independiente del medio de transporte (archivo, vista, API, etc.).
+# Protocolo de referencia: Comunicación de Datos Transaccionales
+#                          Fudo–Skalar (2026-04-09)
+
+contract:
+  name: fudo-skalar-transactional-revenue
+  version: "1.0.0"
+  status: draft
+  created: "2026-04-16"
+
+# ── Esquema ────────────────────────────────────────────────────
+dataset:
+  name: fudo_transactional_revenue
+
+columns:
+  - name: client_id
+    type: STRING
+    nullable: false
+    description: Identificador único e inmutable del cliente
+
+  - name: transaction_date
+    type: DATE
+    nullable: false
+    format: "YYYY-MM-DD"
+    description: Fecha de desembolso de la transacción
+
+  - name: currency
+    type: STRING
+    nullable: false
+    valid_values: [ARS, BRL, CLP, COP, MXN, USD]
+    description: Código ISO-4217
+
+  - name: collections
+    type: FLOAT64
+    nullable: false
+    min: 0
+    description: Revenue cash-basis en moneda local, neto de IVA
+
+  - name: product
+    type: STRING
+    nullable: true
+    valid_values: [Saas, Payments, Online Ordering]
+    description: Línea de producto
+
+  - name: channel
+    type: STRING
+    nullable: true
+    description: Canal de adquisición del cliente
+
+  - name: client_segment
+    type: STRING
+    nullable: true
+    description: Segmento de cliente definido por Fudo
+
+# ── Calidad ────────────────────────────────────────────────────
+quality:
+  - Columnas NOT NULL sin valores nulos
+  - Valores de currency y product dentro de valid_values
+  - collections >= 0

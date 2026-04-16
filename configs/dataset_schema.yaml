@@ -1,5 +1,8 @@
 # Canonical schema for Fudo → Skalar transactional data.
 # Based on: Protocolo de Comunicación de Datos Transaccionales (2026-04-09)
+#
+# NOTE: This file documents the CURRENT state of the data as received.
+# For the specification of what Fudo SHOULD deliver, see data_contract.yaml.
 
 dataset:
   name: "fudo_revenue"

@@ -12,6 +12,8 @@ dependencies = [
     "pyarrow>=17.0",
     "pyyaml>=6.0",
     "jupyter>=1.0",
+    "polars>=1.0",
+    "duckdb>=1.0",
 ]
 
 [build-system]
