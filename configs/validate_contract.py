@@ -42,7 +42,13 @@ def validate(df: pd.DataFrame, contract: dict) -> list[dict]:
     for name, spec in contract_cols.items():
         if name not in df.columns:
             if not spec.get("nullable", True):
-                errors.append({"column": name, "check": "presencia", "detail": "Columna NOT NULL ausente"})
+                errors.append(
+                    {
+                        "column": name,
+                        "check": "presencia",
+                        "detail": "Columna NOT NULL ausente",
+                    }
+                )
             continue
 
         col = df[name]
@@ -51,21 +57,25 @@ def validate(df: pd.DataFrame, contract: dict) -> list[dict]:
         actual = str(col.dtype)
         expected = TYPE_MAP.get(spec["type"], {spec["type"].lower()})
         if actual not in expected:
-            errors.append({
-                "column": name,
-                "check": "tipo",
-                "detail": f"Esperado {spec['type']} ({expected}), recibido {actual}",
-            })
+            errors.append(
+                {
+                    "column": name,
+                    "check": "tipo",
+                    "detail": f"Esperado {spec['type']} ({expected}), recibido {actual}",
+                }
+            )
 
         # Nulabilidad
         if not spec.get("nullable", True):
             n_null = int(col.isnull().sum())
             if n_null > 0:
-                errors.append({
-                    "column": name,
-                    "check": "nulabilidad",
-                    "detail": f"{n_null} valores nulos en columna NOT NULL",
-                })
+                errors.append(
+                    {
+                        "column": name,
+                        "check": "nulabilidad",
+                        "detail": f"{n_null} valores nulos en columna NOT NULL",
+                    }
+                )
 
         # Valores válidos
         if "valid_values" in spec:
@@ -73,21 +83,25 @@ def validate(df: pd.DataFrame, contract: dict) -> list[dict]:
             actual_vals = set(col.dropna().unique())
             unexpected = actual_vals - allowed
             if unexpected:
-                errors.append({
-                    "column": name,
-                    "check": "dominio",
-                    "detail": f"Valores no permitidos: {sorted(unexpected)}",
-                })
+                errors.append(
+                    {
+                        "column": name,
+                        "check": "dominio",
+                        "detail": f"Valores no permitidos: {sorted(unexpected)}",
+                    }
+                )
 
         # Rango mínimo
         if "min" in spec and pd.api.types.is_numeric_dtype(col):
             below = int((col < spec["min"]).sum())
             if below > 0:
-                errors.append({
-                    "column": name,
-                    "check": "rango",
-                    "detail": f"{below} valores por debajo del mínimo ({spec['min']})",
-                })
+                errors.append(
+                    {
+                        "column": name,
+                        "check": "rango",
+                        "detail": f"{below} valores por debajo del mínimo ({spec['min']})",
+                    }
+                )
 
     return errors
 
